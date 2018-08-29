@@ -15,7 +15,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
-import gdb, struct, sys
+import gdb, struct, sys, ast
 from collections import OrderedDict
 
 # This is some retarded hack
@@ -236,6 +236,14 @@ def convert_symbol_to_address(expression):
     expression = expression.strip()
     if expression is "":
         return ""
+    try:
+        # An optimization. Note that all expressions processed by ast.literal_eval are
+        # also valid and have the same meaning (ignoring overflow) in gdb (c)
+        result = ast.literal_eval(expression)
+        if type(result) is int:
+            return str(result)
+    except:
+        pass
     result = gdb.execute("x/b " + expression, to_string=True)
     if common_regexes.cannot_access_memory.search(result):
         return ""
