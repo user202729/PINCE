@@ -730,7 +730,11 @@ class MainForm(QMainWindow, MainWindow):
 
     def pushButton_Wiki_clicked(self):
         for x in range(0x00400000, 0x00402710):
-            self.add_entry_to_addresstable("hmm", hex(x), type_defs.VALUE_INDEX.INDEX_4BYTES)
+            row = QTreeWidgetItem(['', 'd', '?', '4 Bytes', ''])
+            row.setCheckState(FROZEN_COL, Qt.Unchecked)
+            row.setData(ADDR_COL, ADDR_EXPR_ROLE, hex(x))
+            self.treeWidget_AddressTable.addTopLevelItem(row)
+        self.update_address_table_manually()
 
     def pushButton_About_clicked(self):
         self.about_widget.show()
