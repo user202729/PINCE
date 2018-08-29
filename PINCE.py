@@ -729,7 +729,8 @@ class MainForm(QMainWindow, MainWindow):
         self.memory_view_window.activateWindow()
 
     def pushButton_Wiki_clicked(self):
-        SysUtils.execute_shell_command_as_user('python3 -m webbrowser "https://github.com/korcankaraokcu/PINCE/wiki"')
+        for x in range(0x00400000, 0x00402710):
+            self.add_entry_to_addresstable("hmm", hex(x), type_defs.VALUE_INDEX.INDEX_4BYTES)
 
     def pushButton_About_clicked(self):
         self.about_widget.show()
