@@ -294,10 +294,10 @@ class MainForm(QMainWindow, MainWindow):
         super().__init__()
         self.setupUi(self)
         GuiUtils.center(self)
-        self.treeWidget_AddressTable.setColumnWidth(FROZEN_COL, 50)
-        self.treeWidget_AddressTable.setColumnWidth(DESC_COL, 150)
-        self.treeWidget_AddressTable.setColumnWidth(ADDR_COL, 150)
-        self.treeWidget_AddressTable.setColumnWidth(TYPE_COL, 150)
+        self.treeView_AddressTable.setColumnWidth(FROZEN_COL, 50)
+        self.treeView_AddressTable.setColumnWidth(DESC_COL, 150)
+        self.treeView_AddressTable.setColumnWidth(ADDR_COL, 150)
+        self.treeView_AddressTable.setColumnWidth(TYPE_COL, 150)
         QCoreApplication.setOrganizationName("PINCE")
         QCoreApplication.setOrganizationDomain("github.com/korcankaraokcu/PINCE")
         QCoreApplication.setApplicationName("PINCE")
@@ -341,9 +341,9 @@ class MainForm(QMainWindow, MainWindow):
             current_hotkey.setContext(Qt.ApplicationShortcut)
 
         # Saving the original function because super() doesn't work when we override functions like this
-        self.treeWidget_AddressTable.keyPressEvent_original = self.treeWidget_AddressTable.keyPressEvent
-        self.treeWidget_AddressTable.keyPressEvent = self.treeWidget_AddressTable_key_press_event
-        self.treeWidget_AddressTable.contextMenuEvent = self.treeWidget_AddressTable_context_menu_event
+        self.treeView_AddressTable.keyPressEvent_original = self.treeView_AddressTable.keyPressEvent
+        self.treeView_AddressTable.keyPressEvent = self.treeView_AddressTable_key_press_event
+        self.treeView_AddressTable.contextMenuEvent = self.treeView_AddressTable_context_menu_event
         self.pushButton_AttachProcess.clicked.connect(self.pushButton_AttachProcess_clicked)
         self.pushButton_NewFirstScan.clicked.connect(self.pushButton_NewFirstScan_clicked)
         self.pushButton_NextScan.clicked.connect(self.pushButton_NextScan_clicked)
@@ -355,9 +355,9 @@ class MainForm(QMainWindow, MainWindow):
         self.pushButton_MemoryView.clicked.connect(self.pushButton_MemoryView_clicked)
         self.pushButton_RefreshAdressTable.clicked.connect(self.update_address_table_manually)
         self.pushButton_CleanAddressTable.clicked.connect(self.delete_address_table_contents)
-        self.treeWidget_AddressTable.itemDoubleClicked.connect(self.treeWidget_AddressTable_item_double_clicked)
-        self.treeWidget_AddressTable.expanded.connect(self.resize_address_table)
-        self.treeWidget_AddressTable.collapsed.connect(self.resize_address_table)
+        # self.treeView_AddressTable.itemDoubleClicked.connect(self.treeView_AddressTable_item_double_clicked)  TODO implement this
+        self.treeView_AddressTable.expanded.connect(self.resize_address_table)
+        self.treeView_AddressTable.collapsed.connect(self.resize_address_table)
         icons_directory = GuiUtils.get_icons_directory()
         self.pushButton_AttachProcess.setIcon(QIcon(QPixmap(icons_directory + "/monitor.png")))
         self.pushButton_Open.setIcon(QIcon(QPixmap(icons_directory + "/folder.png")))
@@ -485,7 +485,7 @@ class MainForm(QMainWindow, MainWindow):
                 dialog_text + "\n\nGo to settings->General to disable this dialog",)], buttons=[QDialogButtonBox.Ok])
             dialog.exec_()
 
-    def treeWidget_AddressTable_context_menu_event(self, event):
+    def treeView_AddressTable_context_menu_event(self, event):
         current_row = self.treeWidget_AddressTable.currentItem()
         menu = QMenu()
         edit_menu = menu.addMenu("Edit")
@@ -667,7 +667,7 @@ class MainForm(QMainWindow, MainWindow):
         for item in self.treeWidget_AddressTable.selectedItems():
             (item.parent() or root).removeChild(item)
 
-    def treeWidget_AddressTable_key_press_event(self, event):
+    def treeView_AddressTable_key_press_event(self, event):
         actions = type_defs.KeyboardModifiersTupleDict([
             ((Qt.NoModifier, Qt.Key_Delete), self.delete_selected_records),
             ((Qt.ControlModifier, Qt.Key_B), self.browse_region_for_selected_row),
@@ -692,27 +692,8 @@ class MainForm(QMainWindow, MainWindow):
             self.treeWidget_AddressTable.keyPressEvent_original(event)
 
     def update_address_table_manually(self):
-        it = QTreeWidgetItemIterator(self.treeWidget_AddressTable)
-        table_contents = []
-        address_expr_list = []
-        value_type_list = []
-        rows = []
-        while True:
-            row = it.value()
-            if not row:
-                break
-            it += 1
-            address_expr_list.append(row.data(ADDR_COL, ADDR_EXPR_ROLE))
-            value_type_list.append(row.text(TYPE_COL))
-            rows.append(row)
-        address_list = GDB_Engine.convert_multiple_symbols_to_addresses(address_expr_list)
-        for address, value_type in zip(address_list, value_type_list):
-            index, length, zero_terminate, byte_len = GuiUtils.text_to_valuetype(value_type)
-            table_contents.append((address, index, length, zero_terminate))
-        new_table_contents = GDB_Engine.read_multiple_addresses(table_contents)
-        for row, address, value in zip(rows, address_list, new_table_contents):
-            row.setText(ADDR_COL, address)
-            row.setText(VALUE_COL, str(value))
+        # TODO implement this
+        print('Unimplemented: update_address_table_manually')
 
     def resize_address_table(self):
         self.treeWidget_AddressTable.resizeColumnToContents(FROZEN_COL)
