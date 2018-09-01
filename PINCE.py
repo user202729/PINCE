@@ -27,7 +27,7 @@ from PyQt5.QtCore import Qt, QThread, pyqtSignal, QSize, QByteArray, QSettings, 
 from time import sleep, time
 import os, sys, traceback, signal, re, copy, io, queue, collections, ast, functools, psutil
 
-from libPINCE import GuiUtils, SysUtils, GDB_Engine, type_defs
+from libPINCE import GuiUtils, SysUtils, GDB_Engine, type_defs, common_regexes
 
 from GUI.MainWindow import Ui_MainWindow as MainWindow
 from GUI.SelectProcess import Ui_MainWindow as ProcessWindow
@@ -707,6 +707,7 @@ class MainForm(QMainWindow, MainWindow):
         it = QTreeWidgetItemIterator(self.treeWidget_AddressTable)
         table_contents = []
         address_expr_list = []
+        # TODO handle $_parent
         value_type_list = []
         rows = []
         while True:
@@ -927,8 +928,9 @@ class MainForm(QMainWindow, MainWindow):
         row = self.treeWidget_AddressTable.currentItem()
         description, address_expr, value_type = self.read_address_table_entries(row=row)
         index, length, zero_terminate, byte_len = GuiUtils.text_to_valuetype(value_type)
+        parent = row.parent()
         manual_address_dialog = ManualAddressDialogForm(description=description, address=address_expr, index=index,
-                                                        length=length, zero_terminate=zero_terminate)
+                length=length, zero_terminate=zero_terminate, parent_address=parent and parent.text(ADDR_COL))
         manual_address_dialog.setWindowTitle("Edit Address")
         if manual_address_dialog.exec_():
             description, address_expr, address_type, length, zero_terminate = manual_address_dialog.get_values()
@@ -951,7 +953,8 @@ class MainForm(QMainWindow, MainWindow):
 
     # Changes the column values of the given row
     def change_address_table_entries(self, row, description="", address_expr="", address_type=""):
-        address = GDB_Engine.examine_expression(address_expr).address
+        parent = row.parent()
+        address = GDB_Engine.examine_expression(GuiUtils.process_address(address_expr, parent and parent.text(ADDR_COL))).address
         value = ''
         index, length, zero_terminate, byte_len = GuiUtils.text_to_valuetype(address_type)
         if address:
@@ -1053,7 +1056,8 @@ class ProcessForm(QMainWindow, ProcessWindow):
 # Add Address Manually Dialog
 class ManualAddressDialogForm(QDialog, ManualAddressDialog):
     def __init__(self, parent=None, description="No Description", address="0x",
-                 index=type_defs.VALUE_INDEX.INDEX_4BYTES, length=10, zero_terminate=True):
+                 index=type_defs.VALUE_INDEX.INDEX_4BYTES, length=10, zero_terminate=True,
+                 parent_address=''):
         super().__init__(parent=parent)
         self.setupUi(self)
         self.adjustSize()
@@ -1086,6 +1090,7 @@ class ManualAddressDialogForm(QDialog, ManualAddressDialog):
             self.label_length.hide()
             self.lineEdit_length.hide()
             self.checkBox_zeroterminate.hide()
+        self.parent_address = parent_address
         self.comboBox_ValueType.currentIndexChanged.connect(self.comboBox_ValueType_current_index_changed)
         self.lineEdit_length.textChanged.connect(self.update_value_of_address)
         self.checkBox_zeroterminate.stateChanged.connect(self.update_value_of_address)
@@ -1108,7 +1113,7 @@ class ManualAddressDialogForm(QDialog, ManualAddressDialog):
             pass
 
     def update_value_of_address(self):
-        address = GDB_Engine.examine_expression(self.lineEdit_address.text()).address
+        address = GDB_Engine.examine_expression(GuiUtils.process_address(self.lineEdit_address.text(), self.parent_address)).address
         if not address:
             self.label_valueofaddress.clear()
             return

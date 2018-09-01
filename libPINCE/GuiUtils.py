@@ -22,6 +22,7 @@ try:
 except ImportError:
     pass
 from . import SysUtils, type_defs, common_regexes
+import re
 
 
 #:tag:GUI
@@ -275,3 +276,23 @@ def contains_reference_mark(string):
         bool: True if given string contains the reference mark, False otherwise
     """
     return True if common_regexes.reference_mark.search(string) else False
+
+
+# NOTE what's the tag?
+# NOTE should this function be put here?
+def process_address(address, parent_address):
+    """Replace special notations inside address:
+    `$_parent` refers to the address of the parent node
+    Currently there is no way to escape special notations
+
+    Args:
+        address (str): Address string
+        parent_address: Address of parent, or None. If it's not a hexadecimal number,
+        nothing happens
+
+    Returns:
+        str: Replaced value
+    """
+    if parent_address and common_regexes.hex_number.fullmatch(parent_address):
+        address = re.sub(r'\$_parent\b', parent_address+' ', address)
+    return address
